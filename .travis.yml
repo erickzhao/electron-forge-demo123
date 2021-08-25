@@ -121,5 +121,5 @@ script:
   if test -z "$TRAVIS_TAG"; then
     yarn make --platform $PLATFORM --arch $ARCH --targets=@electron-forge/maker-$MAKER
   else
-    yarn publish
+    yarn run publish
   fi
