@@ -6,6 +6,9 @@ case "$(uname -s)" in
           sudo apt-get install --yes --no-install-recommends fakeroot dpkg
         fi
         if [[ "$MAKER" = "rpm" || -n "$APPVEYOR" ]]; then
+          if [[ -n $CIRCLECI ]]; then
+            sudo apt-get update
+          fi
           sudo apt-get install --yes --no-install-recommends rpm
         fi
         if [[ "$MAKER" = "flatpak" || -n "$APPVEYOR" ]]; then
@@ -17,5 +20,13 @@ case "$(uname -s)" in
         ;;
     "Darwin")
         "$(dirname $0)"/codesign/import-testing-cert-ci.sh
+        ;;
+    "Windows"|"MINGW"|"MSYS"*)
+        if [[ -n $CIRCLECI ]]; then
+          if [[ "$MAKER" = "wix" ]]; then
+            choco install wixtoolset
+            echo 'export PATH="$PATH:/c/Program Files (x86)/WiX Toolset v3.11/bin"' >> "$BASH_ENV"
+          fi
+        fi
         ;;
 esac

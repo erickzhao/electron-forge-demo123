@@ -1,0 +1,188 @@
+version: 2.1
+
+orbs:
+  electron-forge: electron-forge/orb@dev:f259c67
+  node: circleci/node@4.5.1
+  win: circleci/windows@2.2.0
+
+  node-windows:
+    commands:
+      install-node-yarn-and-packages:
+        description: Install Node.js, yarn, and dependent Node.js packages
+        steps:
+          - run:
+              name: Setup Node.js
+              command: |
+                nvm install 12.22.3
+                nvm use 12.22.3
+          - run:
+              name: Install yarn
+              command: npm install -g yarn
+          - run:
+              name: Install Node.js dependencies
+              command: yarn
+
+executors:
+  linux:
+    docker:
+      - image: cimg/node:12.22
+  macos:
+    macos:
+      xcode: 11.4
+
+parameter-maker: &parameter-maker
+  parameters:
+    maker:
+      type: string
+
+steps-bundle-unix: &steps-bundle-unix
+  steps:
+    - checkout
+    - node/install-packages:
+        pkg-manager: yarn
+    - electron-forge/create-bundle:
+        pkg-manager: yarn
+
+steps-distributable-unix: &steps-distributable-unix
+  steps:
+    - checkout
+    - node/install-yarn
+    - node/install-packages:
+        pkg-manager: yarn
+    - electron-forge/create-distributables:
+        maker: << parameters.maker >>
+        pkg-manager: yarn
+
+workflows:
+  build:
+    jobs:
+      - lint
+      - bundle:
+          requires:
+            - lint
+          matrix:
+            parameters:
+              os: [linux, macos]
+      - bundle-linux-arm64:
+          requires:
+            - lint
+      - distributable-linux:
+          requires:
+            - bundle-linux
+          matrix:
+            parameters:
+              maker: [zip, deb, rpm]
+      - distributable-linux-machine:
+          requires:
+            - bundle-linux
+          matrix:
+            parameters:
+              maker: [flatpak, snap]
+      - distributable-linux-arm64:
+          requires:
+            - bundle-linux-arm64
+          matrix:
+            parameters:
+              # No flatpak runtime dependencies for arm64 yet
+              # TODO: fix snap for Ubuntu 20.04
+              maker: [zip, deb, rpm]
+      - distributable-macos:
+          requires:
+            - bundle-macos
+          matrix:
+            parameters:
+              maker: [zip, dmg]
+      - bundle-windows:
+          requires:
+            - lint
+      - distributable-windows:
+          requires:
+            - bundle-windows
+          matrix:
+            parameters:
+              maker: [zip, squirrel, wix]
+      - publish:
+          requires:
+            - distributable-linux
+            - distributable-linux-arm64
+            - distributable-macos
+            - distributable-windows
+
+jobs:
+  lint:
+    executor: node/default
+    steps:
+      - checkout
+      - node/install-packages:
+          pkg-manager: yarn
+      - run:
+          name: Lint
+          command: yarn lint
+  bundle:
+    parameters:
+      os:
+        type: executor
+    executor: << parameters.os >>
+    <<: *steps-bundle-unix
+  bundle-linux-arm64:
+    machine:
+      image: ubuntu-2004:202101-01
+    resource_class: arm.medium
+    <<: *steps-bundle-unix
+  distributable-linux:
+    <<: *parameter-maker
+    executor: linux
+    <<: *steps-distributable-unix
+  distributable-linux-machine:
+    <<: *parameter-maker
+    machine:
+      image: ubuntu-1604:202104-01
+    resource_class: medium
+    <<: *steps-distributable-unix
+  distributable-linux-arm64:
+    <<: *parameter-maker
+    machine:
+      image: ubuntu-2004:202101-01
+    resource_class: arm.medium
+    <<: *steps-distributable-unix
+  distributable-macos:
+    <<: *parameter-maker
+    executor: macos
+    <<: *steps-distributable-unix
+  bundle-windows:
+    executor:
+      name: win/default
+    steps:
+      - checkout
+      - node-windows/install-node-yarn-and-packages
+      - electron-forge/create-bundle:
+          pkg-manager: yarn
+  distributable-windows:
+    <<: *parameter-maker
+    executor:
+      name: win/default
+    steps:
+      - checkout
+      - node-windows/install-node-yarn-and-packages
+      - electron-forge/create-distributables:
+          maker: << parameters.maker >>
+          pkg-manager: yarn
+          shell: bash.exe
+  publish:
+    executor: linux
+    steps:
+      - checkout
+      - attach_workspace:
+          at: out
+      - when:
+          condition:
+            matches:
+              pattern: '^v\d+\.\d+\.\d+'
+              value: << pipeline.git.tag >>
+          steps:
+            - node/install-packages:
+                pkg-manager: yarn
+            - electron-forge/publish-distributables:
+                pkg-manager: yarn
+      - store_artifacts:
+          path: out/make
