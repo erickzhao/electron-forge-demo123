@@ -110,7 +110,9 @@ workflows:
 
 jobs:
   lint:
-    executor: node/default
+    executor:
+      name: node/default
+      tag: "12.22"
     steps:
       - checkout
       - node/install-packages:
