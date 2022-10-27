@@ -128,14 +128,6 @@ jobs:
             platform: mas
             arch: arm64
             maker: dmg
-          # - os: macOS-latest
-          #   platform: mas
-          #   arch: x64
-          #   maker: pkg
-          # - os: macOS-latest
-          #   platform: mas
-          #   arch: arm64
-          #   maker: pkg
           - os: macOS-latest
             platform: mas
             arch: x64
@@ -180,10 +172,6 @@ jobs:
             platform: linux
             arch: x64
             maker: snap
-          # - os: Ubuntu-18.04
-          #   platform: linux
-          #   arch: arm64
-          #   maker: snap
     steps:
       - uses: actions/checkout@v2
       - name: Download bundled app artifact
