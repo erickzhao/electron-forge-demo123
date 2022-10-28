@@ -168,10 +168,6 @@ jobs:
             platform: linux
             arch: arm64
             maker: rpm
-          - os: Ubuntu-18.04
-            platform: linux
-            arch: x64
-            maker: snap
     steps:
       - uses: actions/checkout@v2
       - name: Download bundled app artifact
