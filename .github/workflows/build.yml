@@ -155,14 +155,6 @@ jobs:
           - os: Ubuntu-latest
             platform: linux
             arch: x64
-            maker: flatpak
-          # - os: Ubuntu-latest
-          #   platform: linux
-          #   arch: arm64
-          #   maker: flatpak
-          - os: Ubuntu-latest
-            platform: linux
-            arch: x64
             maker: rpm
           - os: Ubuntu-latest
             platform: linux
