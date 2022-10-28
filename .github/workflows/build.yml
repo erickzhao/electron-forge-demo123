@@ -16,7 +16,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v2.2.0
         with:
-          node-version: 12.x
+          node-version: 18.x
           cache: yarn
       - name: Install
         run: yarn
@@ -57,7 +57,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v2.2.0
         with:
-          node-version: 12.x
+          node-version: 18.x
           cache: yarn
       - name: Bundle app
         uses: electron-forge/bundle-action@main
@@ -184,7 +184,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v2.2.0
         with:
-          node-version: 12.x
+          node-version: 18.x
           cache: yarn
       - name: Generate distributables
         uses: electron-forge/distributable-action@main
